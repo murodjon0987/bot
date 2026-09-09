@@ -35,9 +35,13 @@ async def cmd_start(message: Message, bot: Bot):
             [
                 InlineKeyboardButton(text="📜 O'yin qoidalari", callback_data="show_rules"),
                 InlineKeyboardButton(text="🆘 Yordam", callback_data="show_help")
+            ],
+            [
+                InlineKeyboardButton(text="👨‍💻 Dasturchi bilan aloqa", url="https://t.me/wenzone72")
             ]
         ])
         await message.answer(text, reply_markup=kb, parse_mode="HTML")
+
     else:
         await message.answer(
             "🛡️ <b>Bunker o'yinini boshlash uchun /bunker yoki /game buyrug'ini yuboring!</b>",
@@ -98,9 +102,14 @@ async def send_help_message(message: Message):
         "🛑 <b>/stop_game</b> — Joriy o'yinni to'xtatish (guruh admini yoki boshlagan shaxs uchun)\n"
         "📜 <b>/rules</b> — O'yin qoidalarini ko'rish\n"
         "ℹ️ <b>/help</b> — Ushbu yordam xabarini ko'rsatish\n\n"
+        "👨‍💻 <b>Loyiha muallifi / Aloqa:</b> @wenzone72\n\n"
         "<i>Eslatma: O'yinda qatnashish uchun botga shaxsiyda /start bosgan bo'lishingiz shart, aks holda bot sizga anketa yubora olmaydi!</i>"
     )
-    await message.answer(help_text, parse_mode="HTML")
+    kb = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="💬 Dasturchi bilan bog'lanish", url="https://t.me/wenzone72")
+    ]])
+    await message.answer(help_text, reply_markup=kb, parse_mode="HTML")
+
 
 
 @router.message(Command("stop_game"))
