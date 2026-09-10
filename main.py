@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import sys
+import os
+import aiohttp
 
 # Windows terminallarida UTF-8 emoji va belgilarni to'g'ri ko'rsatish
 reconfig_out = getattr(sys.stdout, "reconfigure", None)
@@ -31,6 +33,24 @@ logging.basicConfig(
 logger = logging.getLogger("bunker_bot")
 
 
+async def self_keep_alive():
+    """Render.com da 15 daqiqada uxlab qolmasligi uchun har 8 daqiqada o'zini o'zi ping qiladi"""
+    app_url = os.getenv("RENDER_EXTERNAL_URL", "").strip()
+    if not app_url:
+        return
+    logger.info(f"🔄 Self-Keep-Alive faollashtirildi: {app_url}/health")
+    await asyncio.sleep(30)
+    while True:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{app_url}/health", timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                    logger.info(f"💓 Keep-alive ping muvaffaqiyatli: status={resp.status}")
+
+        except Exception as e:
+            logger.warning(f"Keep-alive ping xatosi: {e}")
+        await asyncio.sleep(8 * 60)  # Har 8 daqiqada
+
+
 async def main():
     logger.info("🛡️ 'BUNKER' Telegram Boti ishga tushirilmoqda...")
 
@@ -57,6 +77,9 @@ async def main():
     # 24/7 Bepul xostinglar (Render.com, Koyeb) uchun fonida web serverni ishga tushirish
     runner = await start_web_server(config.HOST, config.PORT)
 
+    # Render uxlab qolmasligi uchun o'zini-o'zi ping qilish vazifasini ishga tushirish
+    asyncio.create_task(self_keep_alive())
+
     try:
         # Eski kutilgan xabarlarni tozalash va pollingni boshlash
         await bot.delete_webhook(drop_pending_updates=True)
@@ -65,6 +88,7 @@ async def main():
         logger.info(f"🌐 24/7 Health Monitoring: http://{config.HOST}:{config.PORT}/health")
 
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+
     finally:
         logger.info("🛑 Bot to'xtatilmoqda...")
         await runner.cleanup()
